@@ -5,8 +5,15 @@ require_once __DIR__ . '/autoload.php';
 
 // Importação de classes
 use src\controller\cli\CliCommands;
+use src\controller\main\Main;
 
 try {
+
+    /**
+     * VARIÁVEIS GLOBAIS
+     * Quantidade de Argumentos => $argc
+     * Lista de Argumentos => $argv
+     */
 
     // Instânciamento de classes
     $CliCommands = new CliCommands();
@@ -19,8 +26,9 @@ try {
 
     // Verifica se o script foi chamado com pelo menos um argumento (o comando a ser executado).
     if ($argc < 2) {
-        echo "Uso: php cli.php <comando> [opções]\n"; // Mensagem de uso quando o comando é inválido ou não fornecido.
-        exit(1); // Sai do script com código de erro 1 (indica falha).
+
+        // Informa a exceção
+        throw new Exception("Uso: php cli.php <comando> [opções]\n");
     }
 
     /**
@@ -28,44 +36,28 @@ try {
      * n => Name/Nome
      */
 
-    // Obtém o nome do comando passado como argumento no terminal.
-    $commandName = $argv[1];
-
-    // Captura os argumentos extras passados após o comando.
-    $rawArguments = array_slice($argv, 2);
-    $arguments = [];
-    $options = [];
-
-    // Processa os argumentos
-    foreach ($rawArguments as $arg) {
-        if (preg_match('/^([\w]+)\.(.+)$/', $arg, $matches)) {
-            // Se corresponder ao padrão "letra.palavra" ou "palavra.palavra", armazena como opção
-            $options[$matches[1]] = $matches[2];
-        } else {
-            // Caso contrário, adiciona como argumento normal
-            $arguments[] = $arg;
-        }
-    }
+    // Captura todos os comandos ignorando o arquivo. Ex.: php cli.php ...
+    $options = Main::getArguments(array_slice($argv, 1));
 
     // Verifica se foi informado o nome do arquivo
     if (isset($options['n']) && empty($options['n']) && empty($options['name'])) {
 
         // Informa a exceção
-        $errors .= "\n \t - Não foi informado o nome do " . $commandName;
+        $errors .= "\n \t - Não foi informado o nome do " . $options['make'];
     }
 
     // Verifica se foi informado o nome do arquivo
     if (isset($options['t']) && empty($options['t']) && empty($options['table'])) {
 
         // Informa a exceção
-        $errors .= "\n \t - Não foi informado a tabela do " . $commandName;
+        $errors .= "\n \t - Não foi informado a tabela do " . $options['make'];
     }
 
     // Verifica se foi informado o nome do arquivo
-    if ($CliCommands->CheckCommand($commandName)) {
+    if (!$CliCommands->CheckCommand('make', $options['make'])) {
 
         // Informa a exceção
-        $errors .= "\n \t - Comando não encontrado " . $commandName;
+        $errors .= "\n \t - Comando não encontrado " . $options['make'];
     }
 
     // Verifica se existe erros
@@ -76,12 +68,13 @@ try {
     }
 
     // Monta o nome completo da classe, incluindo o namespace "commands\".
-    $commandClass = "src\\controller\\commands\\" . $CliCommands->GetCommand($commandName);
+    $commandClass = "src\\controller\\commands\\" . $CliCommands->GetCommand('make', $options['make']);
 
     // Verifica se a classe correspondente ao comando existe.
     if (!class_exists($commandClass)) {
-        echo "Erro: Classe '$commandClass' não encontrada.\n"; // Mensagem de erro caso a classe não seja encontrada.
-        exit(1); // Sai do script com código de erro 1.
+
+        // Informa a exceção
+        throw new Exception("Erro: Classe '$commandClass' não encontrada.");
     }
 
     // Cria uma instância da classe do comando correspondente.
@@ -89,29 +82,19 @@ try {
 
     // Chama o método execute() da classe do comando, passando os argumentos extras.
     // Exibe todas as mensagens geradas
-    foreach($command->execute($options) as $ke => $result)
-    {
+    foreach ($command->execute($options) as $ke => $result) {
 
         // Verifica o status
-        if((bool)$result->status)
-        {
+        if ((bool)$result->status) {
 
             // Mensagem de sucesso
             echo "Controller para a tabela :: " . $result->Tables_in_cdldf . " criado com sucesso! \n";
-
-        }
-        else
-        {
+        } else {
 
             // Mensagem de erro
             echo "Não foi possível gerar o Controller para a tabela :: " . $result->Tables_in_cdldf . "\n";
-
         }
-        
     }
-
-    // Captura o tempo após a execução da função
-    $fim = microtime(true);
 } catch (Exception $exception) {
 
     // Tratamento da mensagem de exeção
@@ -128,11 +111,14 @@ try {
     echo $resultError;
 } finally {
 
+    // Captura o tempo após a execução da função
+    $fim = microtime(true);
+
     // Calcula o tempo total em segundos
     $tempoTotal = $fim - $inicio;
 
     // Exibe o tempo gasto para gerar os arquivos
-    echo "Tempo de execução: " . number_format($tempoTotal, 3) . " ms\n";
+    echo "\n Tempo de execução: " . number_format($tempoTotal, 3) . " ms\n";
 
     // Encerra a aplicação
     exit;

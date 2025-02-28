@@ -24,25 +24,23 @@ class CliCommands
         
         $this->commands = [
 
-            'make:migration' => 'MakeMigration',  // O comando "make:migration" será tratado pela classe "MakeMigration".
-            'make:controller' => 'MakeController', // O comando "make:controller" será tratado pela classe "MakeController".
-            'make:model' => 'MakeModel' // O comando "make:controller" será tratado pela classe "MakeController".
+            'make' => [
+                'controller' => 'MakeController'
+            ]
 
         ];
 
     }
 
-    public function CheckCommand(string $command){
+    public function CheckCommand(string $command, string $value){
 
-        // Verifica e retorna se existe o comando desejado
-        return (bool)in_array($command, $this->commands);
-
+        return isset($this->commands[$command][$value]);
     }
 
-    public function GetCommand(string $command){
+    public function GetCommand(string $command, string $value){
 
         // Verifica e retorna se existe o comando desejado
-        return $this->commands[$command];
+        return $this->commands[$command][$value];
 
     }
 

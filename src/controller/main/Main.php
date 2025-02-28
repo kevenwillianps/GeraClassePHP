@@ -31,6 +31,34 @@ class Main
     }
 
     /**
+     * Retorna uma array de argumentos
+     * ["t" => "pessoa", "n" => "PessoaValidate", "make" => "controller"]
+     *
+     * @param array $arguments
+     *
+     * @return array|false
+     */
+    public static function getArguments(array $arguments) : array|false
+    {
+
+        $options = [];
+
+        // Processa os argumentos
+        foreach ($arguments as $arg) {
+
+            // Verifico se esta dentro do padrão definido
+            if (preg_match('/^([\w]+)\.(.+)$/', $arg, $matches)) {
+
+                // Se corresponder ao padrão "letra.palavra" ou "palavra.palavra", armazena como opção
+                $options[$matches[1]] = $matches[2];
+            }
+        }
+
+        return $options;
+
+    }
+
+    /**
      * Converte a palavra informada em camel case
      *
      * @param string $string
@@ -161,13 +189,13 @@ class Main
 
         switch ($type) {
 
-                // Crio o nome do "SET"
+            // Crio o nome do "SET"
             case 1:
 
                 $result = 'set' . self::toPascalCase($string);
                 break;
 
-                // Crio o nome do "SET"
+            // Crio o nome do "SET"
             case 2:
 
                 $result = 'get' . self::toPascalCase($string);
