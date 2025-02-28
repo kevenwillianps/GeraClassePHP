@@ -1,0 +1,14 @@
+{
+  "dist": {
+    "path": "dist",
+    "namespace" : "src"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "name": "cdldf",
+    "port": "3306",
+    "user": "root",
+    "password": "root",
+    "charset": "utf8"
+  }
+}
