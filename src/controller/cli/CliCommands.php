@@ -25,7 +25,11 @@ class CliCommands
         $this->commands = [
 
             'make' => [
-                'controller' => 'MakeController'
+                'controller' => 'MakeController',
+                'model' => 'MakeModel'
+            ],
+            'update' => [
+                'controller' => 'UpdateCOntroller'
             ]
 
         ];

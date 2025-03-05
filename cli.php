@@ -28,36 +28,43 @@ try {
     if ($argc < 2) {
 
         // Informa a exceção
-        throw new Exception("Uso: php cli.php <comando> [opções]\n");
+        throw new Exception("Não foram encontrados comandos para ser executado");
     }
-
-    /**
-     * t => Tabela
-     * n => Name/Nome
-     */
 
     // Captura todos os comandos ignorando o arquivo. Ex.: php cli.php ...
-    $options = Main::getArguments(array_slice($argv, 1));
+    $commands = Main::getCommand(array_slice($argv, 1));
+    $options = Main::getArguments(array_slice($argv, 2));
 
-    // Verifica se foi informado o nome do arquivo
-    if (isset($options['n']) && empty($options['n']) && empty($options['name'])) {
+    // Verifica se o script foi chamado com pelo menos um argumento (o comando a ser executado).
+    if (count($options) === 0) {
 
         // Informa a exceção
-        $errors .= "\n \t - Não foi informado o nome do " . $options['make'];
+        throw new Exception("Não foram encontrados comandos para ser executado");
+    }
+    
+    // Verifica se foi informado o nome do arquivo
+    if (!isset($options['n']) && $options['t'] != '*') {
+
+        // Informa a exceção
+        $errors .= "\n \t - Não foi informado o nome do " . $commands['make'];
     }
 
     // Verifica se foi informado o nome do arquivo
-    if (isset($options['t']) && empty($options['t']) && empty($options['table'])) {
+    if (!isset($options['t'])) {
 
         // Informa a exceção
-        $errors .= "\n \t - Não foi informado a tabela do " . $options['make'];
+        $errors .= "\n \t - Não foi informado a tabela do " . $commands['make'];
     }
+    
+    // Percorre os comandos recebidos para validar cada um
+    foreach ($commands as $key => $value) {
 
-    // Verifica se foi informado o nome do arquivo
-    if (!$CliCommands->CheckCommand('make', $options['make'])) {
+        if (!$CliCommands->CheckCommand($key, $value)) {
 
-        // Informa a exceção
-        $errors .= "\n \t - Comando não encontrado " . $options['make'];
+            // Informa a exceção
+            $errors .= "\n \t - Comando não encontrado: " . $key . "." . $value;
+
+        }
     }
 
     // Verifica se existe erros
@@ -67,9 +74,12 @@ try {
         throw new Exception($errors);
     }
 
-    // Monta o nome completo da classe, incluindo o namespace "commands\".
-    $commandClass = "src\\controller\\commands\\" . $CliCommands->GetCommand('make', $options['make']);
+    // Obtém a chave do comando dinamicamente
+    $commandKey = array_key_first($commands);
 
+    // Monta o nome completo da classe, incluindo o namespace "commands\".
+    $commandClass = "src\\controller\\commands\\" . $CliCommands->GetCommand($commandKey, $commands[$commandKey]);
+    
     // Verifica se a classe correspondente ao comando existe.
     if (!class_exists($commandClass)) {
 

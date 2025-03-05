@@ -59,6 +59,29 @@ class Main
     }
 
     /**
+     * Retorna uma array de argumentos
+     * ["t" => "pessoa", "n" => "PessoaValidate", "make" => "controller"]
+     *
+     * @param array $arguments
+     *
+     * @return array|false
+     */
+    public static function getCommand(array $commands) : array|false
+    {
+        
+        // Pega apenas o primeiro argumento
+        $arg = $commands[0];
+
+        // Verifico se está dentro do padrão definido
+        if (preg_match('/^([\w]+)\.(.+)$/', $arg, $matches)) {
+            // Retorna apenas o primeiro parâmetro encontrado
+            return [$matches[1] => $matches[2]];
+        }
+
+        return false;
+    }
+
+    /**
      * Converte a palavra informada em camel case
      *
      * @param string $string
