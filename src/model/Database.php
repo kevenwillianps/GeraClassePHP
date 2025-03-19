@@ -75,6 +75,31 @@ class Database
 
 	}
 
+	/**
+	 * Obtenho o nome da chave primária da tabela	
+	 *
+	 * @return array|false
+	 */
+	public function GetPrimaryKey(string $table) : array|false
+	{
+
+		// Consulta SQL
+		$this->sql = 'SELECT COLUMN_NAME
+					  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+					  WHERE TABLE_SCHEMA = \'empresa_db\'
+					  AND TABLE_NAME = \'clientes\'
+					  AND CONSTRAINT_NAME = \'PRIMARY\';';
+
+		// Preparo o SQL para execução
+		$this->stmt = $this->connection->connect()->prepare($this->sql);
+
+		// Executa o SQL
+		$this->stmt->execute();
+
+		// Retorno do resultado
+		return $this->stmt->fetchAll(\PDO::FETCH_OBJ);
+
+	}
 
 	/**
 	 * Encerra conexões abertas

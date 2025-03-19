@@ -55,7 +55,7 @@ try {
         // Informa a exceção
         $errors .= "\n \t - Não foi informado a tabela do " . $commands['make'];
     }
-    
+
     // Percorre os comandos recebidos para validar cada um
     foreach ($commands as $key => $value) {
 

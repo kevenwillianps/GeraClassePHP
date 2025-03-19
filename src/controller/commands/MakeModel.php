@@ -110,7 +110,7 @@ class MakeModel extends Command
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Consulta SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . '\';' .
+                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . '\' WHERE;' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .

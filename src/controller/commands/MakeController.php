@@ -40,7 +40,7 @@ class MakeController extends Command
             $this->tables = $this->dataBase->ShowTables();
         } else {
             // Armazena apenas a tabela informada
-            $array['Tables_in_cdldf'] = $args['t'];
+            $array['Tables_in_poupeira'] = $args['t'];
 
             // Converte os dados para array
             $this->tables[0] = (object)$array;
@@ -51,9 +51,9 @@ class MakeController extends Command
 
             // Objeto para criação da estrutura
             $this->data = new stdClass();
-            $this->data->name_class = $args['t'] === '*' ? ucfirst($result->Tables_in_cdldf) : $args['n'];
-            $this->data->name_file = $args['t'] === '*' ? Main::toPascalCase($result->Tables_in_cdldf) . '.php' : $args['n'] . '.php';
-            $this->data->table = strtolower($result->Tables_in_cdldf);
+            $this->data->name_class = $args['t'] === '*' ? ucfirst($result->Tables_in_poupeira) : $args['n'];
+            $this->data->name_file = $args['t'] === '*' ? Main::toPascalCase($result->Tables_in_poupeira) . '.php' : $args['n'] . '.php';
+            $this->data->table = strtolower($result->Tables_in_poupeira);
             $this->data->private_variables = null;
             $this->data->functions = null;
 
