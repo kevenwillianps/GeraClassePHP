@@ -57,6 +57,8 @@ class MakeModel extends Command
             $this->data->table = strtolower($result->Tables_in_cdldf);
             $this->data->private_variables = null;
             $this->data->functions = new stdClass();
+            $this->data->constraint = new stdClass();
+            $this->data->constraint->primary_key = $this->dataBase->getConstraint($this->config->database->name, $result->Tables_in_cdldf, 'PRIMARY');
 
             $this->data->private_variable .= str_repeat("\t", 1) . '// Declara as variáveis da classe ' . PHP_EOL .
                                              str_repeat("\t", 1) . 'private Mysql $connection;' . PHP_EOL .
@@ -110,12 +112,17 @@ class MakeModel extends Command
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Consulta SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . '\' WHERE;' .
+                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . ' ' . Main::primeirasLetras($this->data->table) . ' WHERE ' . $this->data->constraint->primary_key . ' = ' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) .'\';' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
                     PHP_EOL . 
                     str_repeat("\t", 2) . '$this->stmt = $this->connection->connect()->prepare($this->sql);' .
+                    PHP_EOL .
+                    PHP_EOL .
+                    str_repeat("\t", 2) . '// Preencho os parâmetros do SQL' .
+                    PHP_EOL . 
+                    str_repeat("\t", 2) . '$this->stmt->bindParam(\'' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) . '\', $CompaniesValidate->getCompanyId());' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Executa o SQL' .

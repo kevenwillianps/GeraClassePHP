@@ -42,10 +42,13 @@ class Pessoas {
 	{
 
 		// Consulta SQL
-		$this->sql = 'SELECT * FROM pessoas';
+		$this->sql = 'SELECT * FROM pessoas p WHERE pessoa_id = :pessoaId';
 
 		// Preparo o SQL para execução
 		$this->stmt = $this->connection->connect()->prepare($this->sql);
+
+		// Preencho os parâmetros do SQL
+		$this->stmt->bindParam(':pessoaId', $CompaniesValidate->getCompanyId());
 
 		// Executa o SQL
 		$this->stmt->execute();

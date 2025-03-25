@@ -1,5 +1,36 @@
 {
-  "dockblock" : true,
+  "controller" : {
+    "dockblock" : {
+      "get" : true,
+      "set" : true,
+      "class" : true
+    },
+    "validation" : true,
+    "default_function" : "$",
+    "default variables" : [
+      {
+        "type" : "Main",
+        "visibility" : "private",
+        "name" : "Main"
+      }
+    ]
+  },
+  "model" : {
+    "dockblock" : {
+      "get" : true,
+      "set" : true,
+      "class" : true
+    },
+    "validation" : true,
+    "default_function" : "$",
+    "default variables" : [
+      {
+        "type" : "Main",
+        "visibility" : "private",
+        "name" : "Main"
+      }
+    ]
+  },
   "dist": {
     "path": "dist",
     "namespace" : "src"

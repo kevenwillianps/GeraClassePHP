@@ -129,6 +129,22 @@ class Main
     }
 
     /**
+     * Converte a palavra informada em Pascal Case (Upper Camel Case)
+     *
+     * @param string $string
+     * @return string
+     */
+    public static function toBindParam(string $string): string
+    {
+
+        // Define o formato
+        $string = ':' . $string;
+
+        // Junta tudo sem espaços
+        return $string;
+    }
+
+    /**
      * Obtem o tipo de campo de acordo com chave informada
      *
      * @param string $string
@@ -250,4 +266,11 @@ class Main
         // Verifica se o arquivo foi criado
         return (bool) is_file($dir . $name);
     }
+
+    public static function primeirasLetras(string $texto): string {
+        $palavras = explode('_', $texto);
+        $iniciais = array_map(fn($palavra) => $palavra[0] ?? '', $palavras);
+        return implode('', $iniciais);
+    }
+
 }
