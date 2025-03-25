@@ -1,0 +1,7 @@
+# Ignorar arquivos específicos
+.dist/
+
+# Ignorar a pasta especificas arquivos de cache do Windows
+
+# Ignorar arquivos do VSCode
+.vscode/
