@@ -55,15 +55,31 @@ class MakeModel extends Command
             $this->data->name_class = $args['t'] === '*' ? ucfirst($result->Tables_in_cdldf) : $args['n'];
             $this->data->name_file = $args['t'] === '*' ? Main::toPascalCase($result->Tables_in_cdldf) . '.php' : $args['n'] . '.php';
             $this->data->table = strtolower($result->Tables_in_cdldf);
+            $this->data->table_nickname = Main::primeirasLetras($this->data->table);
             $this->data->private_variables = null;
             $this->data->functions = new stdClass();
             $this->data->constraint = new stdClass();
             $this->data->constraint->primary_key = $this->dataBase->getConstraint($this->config->database->name, $result->Tables_in_cdldf, 'PRIMARY');
+            $this->data->inputs = $this->dataBase->DescribeTable($this->data->table);
+            $this->data->inputs_str = null;
+            $this->data->inputs_values_str = null;
+
+            $this->data->class_parameter = Main::toPascalCase($this->data->table) . Main::toPascalCase($this->config->model->class_parameter_suffix);
 
             $this->data->private_variable .= str_repeat("\t", 1) . '// Declara as variáveis da classe ' . PHP_EOL .
                                              str_repeat("\t", 1) . 'private Mysql $connection;' . PHP_EOL .
                                              str_repeat("\t", 1) . 'private null|string $sql;' . PHP_EOL .
                                              str_repeat("\t", 1) . 'private object $stmt;';
+
+            // Cria uma string de inputs
+            foreach($this->data->inputs as $key => $result)
+            {
+
+                $this->data->inputs_str .= '`'. $result->Field . '`' . (($key + 1) >= count($this->data->inputs) ? '' : ', ');
+                $this->data->inputs_values_str .= Main::toBindParam(Main::toCamelCase($result->Field)) . (($key + 1) >= count($this->data->inputs) ? '' : ', ');
+                $this->data->inputs_bindParam .= str_repeat("\t", 2) . '$this->stmt->bindParam(\'' . Main::toBindParam(Main::toCamelCase($result->Field)) . '\', $' .  $this->data->class_parameter . '->get' . Main::toPascalCase($result->Field) . '());' . PHP_EOL;
+
+            }
 
             $this->data->functions->construct .= str_repeat("\t", $this->tabQuantity) . 'public function __construct()' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
@@ -106,13 +122,13 @@ class MakeModel extends Command
                     PHP_EOL .
                     PHP_EOL;
 
-            $this->data->functions->get .= str_repeat("\t", $this->tabQuantity) . 'public function get(): array|false' . PHP_EOL .
+            $this->data->functions->get .= str_repeat("\t", $this->tabQuantity) . 'public function get(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): array|false' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Consulta SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . ' ' . Main::primeirasLetras($this->data->table) . ' WHERE ' . $this->data->constraint->primary_key . ' = ' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) .'\';' .
+                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . ' ' . $this->data->table_nickname . ' WHERE ' . $this->data->constraint->primary_key . ' = ' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) .'\';' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
@@ -122,7 +138,7 @@ class MakeModel extends Command
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preencho os parâmetros do SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->stmt->bindParam(\'' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) . '\', $CompaniesValidate->getCompanyId());' .
+                    str_repeat("\t", 2) . '$this->stmt->bindParam(\'' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) . '\', $' .  $this->data->class_parameter . '->get' . Main::toPascalCase($this->data->constraint->primary_key) . '());' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Executa o SQL' .
@@ -139,19 +155,25 @@ class MakeModel extends Command
                     PHP_EOL .
                     PHP_EOL;
 
-                $this->data->functions->save .= str_repeat("\t", $this->tabQuantity) . 'public function save(' . $this->data->name_class . '): array|false' . PHP_EOL .
+                $this->data->functions->save .= str_repeat("\t", $this->tabQuantity) . 'public function save(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): array|false' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Consulta SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . '\';' .
+                    str_repeat("\t", 2) . '$this->sql = \'INSERT INTO ' . $this->data->table . '(' . $this->data->inputs_str . ')' .
+                    PHP_EOL .
+                    str_repeat("\t", 6) . 'VALUES(' . $this->data->inputs_values_str . ');\';' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
                     PHP_EOL . 
                     str_repeat("\t", 2) . '$this->stmt = $this->connection->connect()->prepare($this->sql);' .
                     PHP_EOL .
+                    PHP_EOL .
+                    str_repeat("\t", 2) . '// Preencho os parâmetros do SQL' .
+                    PHP_EOL . 
+                    $this->data->inputs_bindParam .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Executa o SQL' .
                     PHP_EOL . 
@@ -167,18 +189,23 @@ class MakeModel extends Command
                     PHP_EOL .
                     PHP_EOL;
 
-                $this->data->functions->delete .= str_repeat("\t", $this->tabQuantity) . 'public function delete(): array|false' . PHP_EOL .
+                $this->data->functions->delete .= str_repeat("\t", $this->tabQuantity) . 'public function delete(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): array|false' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Consulta SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . '\';' .
+                    str_repeat("\t", 2) . '$this->sql = \'DELETE FROM ' . $this->data->table . ' ' . $this->data->table_nickname . ' WHERE ' . $this->data->table_nickname . '.' . $this->data->constraint->primary_key . ' = ' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) . '\';' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
                     PHP_EOL . 
                     str_repeat("\t", 2) . '$this->stmt = $this->connection->connect()->prepare($this->sql);' .
+                    PHP_EOL .
+                    PHP_EOL .
+                    str_repeat("\t", 2) . '// Preencho os parâmetros do SQL' .
+                    PHP_EOL . 
+                    str_repeat("\t", 2) . '$this->stmt->bindParam(\'' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) . '\', $' .  $this->data->class_parameter . '->get' . Main::toPascalCase($this->data->constraint->primary_key) . '());' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Executa o SQL' .

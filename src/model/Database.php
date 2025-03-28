@@ -32,28 +32,6 @@ class Database
 	}
 
 	/**
-	 * Obtem uma listagem de todos os campos da tabela em questão
-	 *
-	 * @return object|false
-	 */
-	public function DescribeTable(string $table) : array|false
-	{
-
-		// Consulta SQL
-		$this->sql = 'describe ' . $table;
-
-		// Preparo o SQL para execução
-		$this->stmt = $this->connection->connect()->prepare($this->sql);
-
-		// Executa o SQL
-		$this->stmt->execute();
-
-		// Retorno do resultado
-		return $this->stmt->fetchAll(\PDO::FETCH_OBJ);
-
-	}
-
-	/**
 	 * Lista todas as tabelas do banco de dados
 	 *
 	 * @return array|false
@@ -75,6 +53,28 @@ class Database
 
 	}
 
+	/**
+	 * Obtem uma listagem de todos os campos da tabela em questão
+	 *
+	 * @return object|false
+	 */
+	public function DescribeTable(string $table) : array|false
+	{
+
+		// Consulta SQL
+		$this->sql = 'describe ' . $table;
+
+		// Preparo o SQL para execução
+		$this->stmt = $this->connection->connect()->prepare($this->sql);
+
+		// Executa o SQL
+		$this->stmt->execute();
+
+		// Retorno do resultado
+		return $this->stmt->fetchAll(\PDO::FETCH_OBJ);
+
+	}
+	
 	/**
 	 * Obtenho o nome da chave primária da tabela	
 	 *

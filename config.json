@@ -23,6 +23,7 @@
     },
     "validation" : true,
     "default_function" : "$",
+    "class_parameter_suffix" : "Validate",
     "default variables" : [
       {
         "type" : "Main",
