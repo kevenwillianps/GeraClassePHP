@@ -17,9 +17,20 @@
   },
   "model" : {
     "dockblock" : {
-      "get" : true,
-      "set" : true,
-      "class" : true
+      "class" : {
+        "description" : "Classe responsável para manipular os dados da tabela de ",
+        "category" : "",
+        "package" : "src\\model",
+        "author" : "Keven",
+        "copyright" : "2025 Keven",
+        "license" : "MIT",
+        "version" : "1.0.0",
+        "link" : ""
+      },
+      "save" : "Persitência de dados. Caso o ID seja zero sera criado um novo, caso não, o registro será atualizado",
+      "delete" : "Remove um registro em específico",
+      "get" : "Busca um registro especifico pelo ID informado",
+      "all" : "Lista todos os registros existentes"
     },
     "validation" : true,
     "default_function" : "$",

@@ -98,11 +98,11 @@ try {
         if ((bool)$result->status) {
 
             // Mensagem de sucesso
-            echo "Controller para a tabela :: " . $result->Tables_in_cdldf . " criado com sucesso! \n";
+            echo ucfirst($commands[$commandKey]) . " para a tabela :: " . $result->table . " criado com sucesso! \n";
         } else {
 
             // Mensagem de erro
-            echo "Não foi possível gerar o Controller para a tabela :: " . $result->Tables_in_cdldf . "\n";
+            echo "Não foi possível gerar o Controller para a tabela :: " . $result->table . "\n";
         }
     }
 } catch (Exception $exception) {
@@ -119,6 +119,7 @@ try {
 
     // Exibe da informação
     echo $resultError;
+    
 } finally {
 
     // Captura o tempo após a execução da função

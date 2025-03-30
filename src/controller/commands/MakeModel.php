@@ -37,11 +37,11 @@ class MakeModel extends Command
         if ($args['t'] === '*') {
 
             // Obtem todas as tbelas do banco de dados
-            $this->tables = $this->dataBase->ShowTables();
+            $this->tables = $this->dataBase->ShowTables($this->config->database->name);
 
         } else {
             // Armazena apenas a tabela informada
-            $array['Tables_in_cdldf'] = $args['t'];
+            $array['table'] = $args['t'];
 
             // Converte os dados para array
             $this->tables[0] = (object)$array;
@@ -52,60 +52,100 @@ class MakeModel extends Command
 
             // Objeto para criação da estrutura
             $this->data = new stdClass();
-            $this->data->name_class = $args['t'] === '*' ? ucfirst($result->Tables_in_cdldf) : $args['n'];
-            $this->data->name_file = $args['t'] === '*' ? Main::toPascalCase($result->Tables_in_cdldf) . '.php' : $args['n'] . '.php';
-            $this->data->table = strtolower($result->Tables_in_cdldf);
+
+            // Define o nome da classe
+            $this->data->name_class = $args['t'] === '*' ? ucfirst($result->table) : $args['n'];
+
+            // Define o nome do arquivo
+            $this->data->name_file = $args['t'] === '*' ? Main::toPascalCase($result->table) . '.php' : $args['n'] . '.php';
+
+            // Define a tabela que esta sendo utilizada
+            $this->data->table = strtolower($result->table);
+
+            // Define um apelido para a tabela
             $this->data->table_nickname = Main::primeirasLetras($this->data->table);
-            $this->data->private_variables = null;
-            $this->data->functions = new stdClass();
-            $this->data->constraint = new stdClass();
-            $this->data->constraint->primary_key = $this->dataBase->getConstraint($this->config->database->name, $result->Tables_in_cdldf, 'PRIMARY');
-            $this->data->inputs = $this->dataBase->DescribeTable($this->data->table);
-            $this->data->inputs_str = null;
-            $this->data->inputs_values_str = null;
 
-            $this->data->class_parameter = Main::toPascalCase($this->data->table) . Main::toPascalCase($this->config->model->class_parameter_suffix);
-
-            $this->data->private_variable .= str_repeat("\t", 1) . '// Declara as variáveis da classe ' . PHP_EOL .
-                                             str_repeat("\t", 1) . 'private Mysql $connection;' . PHP_EOL .
+            // Guardo as variaveis privadas
+            $this->data->private_variable = str_repeat("\t", 1) . '// Declara as variáveis da classe ' . PHP_EOL .
+                                             str_repeat("\t", 1) . 'private Mysql $mysql;' . PHP_EOL .
                                              str_repeat("\t", 1) . 'private null|string $sql;' . PHP_EOL .
                                              str_repeat("\t", 1) . 'private object $stmt;';
+
+            // Obtenho todos os campos da tabela
+            $this->data->inputs = $this->dataBase->DescribeTable($this->data->table);
+
+            // Defino o nome da classe como parâmetro
+            $this->data->class_parameter = Main::toPascalCase($this->data->table) . Main::toPascalCase($this->config->model->class_parameter_suffix);
+
+            // Objeto para guardar as funções a serem geradas
+            $this->data->functions = new stdClass();
+
+            // OBjeto para guardas as cahves da tabela
+            $this->data->constraint = new stdClass();
+
+            // Obtenho a chave primária
+            $this->data->constraint->primary_key = $this->dataBase->getConstraint($this->config->database->name, $result->table, 'PRIMARY');
+            
+            $this->data->inputs_str = null;
+            $this->data->inputs_values_str = null;
+            $this->data->inputs_bindParam = null;
 
             // Cria uma string de inputs
             foreach($this->data->inputs as $key => $result)
             {
 
+                // Crio a lista de campos em string da tabela
                 $this->data->inputs_str .= '`'. $result->Field . '`' . (($key + 1) >= count($this->data->inputs) ? '' : ', ');
+
+                // Crio os bind params em string
                 $this->data->inputs_values_str .= Main::toBindParam(Main::toCamelCase($result->Field)) . (($key + 1) >= count($this->data->inputs) ? '' : ', ');
+
+                // Crio o preenchimento dos bindparam em string
                 $this->data->inputs_bindParam .= str_repeat("\t", 2) . '$this->stmt->bindParam(\'' . Main::toBindParam(Main::toCamelCase($result->Field)) . '\', $' .  $this->data->class_parameter . '->get' . Main::toPascalCase($result->Field) . '());' . PHP_EOL;
 
             }
 
-            $this->data->functions->construct .= str_repeat("\t", $this->tabQuantity) . 'public function __construct()' . PHP_EOL .
+            // Escritra do Método construtor
+            $this->data->functions->construct = str_repeat("\t", $this->tabQuantity) . 'public function __construct()' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Cria o objeto de conexão com o banco de dados' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->connection = new Mysql();' .
+                    str_repeat("\t", 2) . '$this->mysql = new Mysql();' .
                     PHP_EOL .
                     PHP_EOL .
-                    str_repeat("\t", $this->tabQuantity) . '}' .
-                    PHP_EOL .
-                    PHP_EOL;
+                    str_repeat("\t", $this->tabQuantity) . '}';
 
+            // Inicializa o método
+            $this->data->functions->all = null;
+
+            // Verifico se devo incluir o comentário
+            if(!empty($this->config->model->dockblock->all))
+            {
+
+                // Escrita da documentação da função
+                $this->data->functions->all .= str_repeat("\t", 1) . '/**' . PHP_EOL . 
+                                               str_repeat("\t", 1) . '* ' . $this->config->model->dockblock->all . PHP_EOL . 
+                                               str_repeat("\t", 1) . '*' . PHP_EOL . 
+                                               str_repeat("\t", 1) . '* @return array' . PHP_EOL . 
+                                               str_repeat("\t", 1) . '*/' . PHP_EOL;
+
+            }
+
+            // Escrita da função que lista todos os itens
             $this->data->functions->all .= str_repeat("\t", $this->tabQuantity) . 'public function all(): array|false' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Consulta SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . '\';' .
+                    str_repeat("\t", 2) . '$this->sql = \'SELECT ' . $this->data->table_nickname . '.* FROM ' . $this->data->table . ' ' .  $this->data->table_nickname . '\';' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->stmt = $this->connection->connect()->prepare($this->sql);' .
+                    str_repeat("\t", 2) . '$this->stmt = $this->mysql->connect()->prepare($this->sql);' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Executa o SQL' .
@@ -118,22 +158,39 @@ class MakeModel extends Command
                     str_repeat("\t", 2) . 'return $this->stmt->fetchAll(\PDO::FETCH_OBJ);' .
                     PHP_EOL .
                     PHP_EOL .
-                    str_repeat("\t", $this->tabQuantity) . '}' .
-                    PHP_EOL .
-                    PHP_EOL;
+                    str_repeat("\t", $this->tabQuantity) . '}';
 
-            $this->data->functions->get .= str_repeat("\t", $this->tabQuantity) . 'public function get(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): array|false' . PHP_EOL .
+            // Inicializa o método
+            $this->data->functions->get = null;
+
+            // Verifico se devo incluir o comentário
+            if(!empty($this->config->model->dockblock->get))
+            {
+
+                // Escrita da documentação da função
+                $this->data->functions->get .= str_repeat("\t", 1) . '/**' . PHP_EOL . 
+                                               str_repeat("\t", 1) . '* ' . $this->config->model->dockblock->get . PHP_EOL . 
+                                               str_repeat("\t", 1) . '*' . PHP_EOL . 
+                                               str_repeat("\t", 1) . '* @param ' . $this->data->class_parameter . ' $' . $this->data->class_parameter . PHP_EOL . 
+                                               str_repeat("\t", 1) . '*' . PHP_EOL . 
+                                               str_repeat("\t", 1) . '* @return object|null' . PHP_EOL . 
+                                               str_repeat("\t", 1) . '*/' . PHP_EOL;
+
+            }
+
+            // Escrita da função que obtem um item
+            $this->data->functions->get .= str_repeat("\t", $this->tabQuantity) . 'public function get(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): object|false' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Consulta SQL' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . ' ' . $this->data->table_nickname . ' WHERE ' . $this->data->constraint->primary_key . ' = ' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) .'\';' .
+                    str_repeat("\t", 2) . '$this->sql = \'SELECT * FROM ' . $this->data->table . ' ' . $this->data->table_nickname . ' WHERE ' .  $this->data->table_nickname . '.' . $this->data->constraint->primary_key . ' = ' . Main::toBindParam(Main::toCamelCase($this->data->constraint->primary_key)) .'\';' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->stmt = $this->connection->connect()->prepare($this->sql);' .
+                    str_repeat("\t", 2) . '$this->stmt = $this->mysql->connect()->prepare($this->sql);' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preencho os parâmetros do SQL' .
@@ -151,11 +208,28 @@ class MakeModel extends Command
                     str_repeat("\t", 2) . 'return $this->stmt->fetchObject();' .
                     PHP_EOL .
                     PHP_EOL .
-                    str_repeat("\t", $this->tabQuantity) . '}' .
-                    PHP_EOL .
-                    PHP_EOL;
+                    str_repeat("\t", $this->tabQuantity) . '}';
 
-                $this->data->functions->save .= str_repeat("\t", $this->tabQuantity) . 'public function save(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): array|false' . PHP_EOL .
+                // Inicializa o método
+                $this->data->functions->save = null;
+
+                // Verifico se devo incluir o comentário
+                if(!empty($this->config->model->dockblock->save))
+                {
+
+                    // Escrita da documentação da função
+                    $this->data->functions->save .= str_repeat("\t", 1) . '/**' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '* ' . $this->config->model->dockblock->save . PHP_EOL . 
+                                                str_repeat("\t", 1) . '*' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '* @param ' . $this->data->class_parameter . ' $' . $this->data->class_parameter . PHP_EOL . 
+                                                str_repeat("\t", 1) . '*' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '* @return boolean|string' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '*/' . PHP_EOL;
+
+                }
+
+                // Escrita do método que salva o registro
+                $this->data->functions->save .= str_repeat("\t", $this->tabQuantity) . 'public function save(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): bool|string' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
@@ -168,7 +242,7 @@ class MakeModel extends Command
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->stmt = $this->connection->connect()->prepare($this->sql);' .
+                    str_repeat("\t", 2) . '$this->stmt = $this->mysql->connect()->prepare($this->sql);' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preencho os parâmetros do SQL' .
@@ -185,11 +259,28 @@ class MakeModel extends Command
                     str_repeat("\t", 2) . 'return $this->stmt->fetchObject();' .
                     PHP_EOL .
                     PHP_EOL .
-                    str_repeat("\t", $this->tabQuantity) . '}' .
-                    PHP_EOL .
-                    PHP_EOL;
+                    str_repeat("\t", $this->tabQuantity) . '}';
 
-                $this->data->functions->delete .= str_repeat("\t", $this->tabQuantity) . 'public function delete(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): array|false' . PHP_EOL .
+                // Inicializa o método
+                $this->data->functions->delete = null;
+
+                // Verifico se devo incluir o comentário
+                if(!empty($this->config->model->dockblock->delete))
+                {
+
+                    // Escrita da documentação da função
+                    $this->data->functions->delete .= str_repeat("\t", 1) . '/**' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '* ' . $this->config->model->dockblock->delete . PHP_EOL . 
+                                                str_repeat("\t", 1) . '*' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '* @param ' . $this->data->class_parameter . ' $' . $this->data->class_parameter . PHP_EOL . 
+                                                str_repeat("\t", 1) . '*' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '* @return boolean|string' . PHP_EOL . 
+                                                str_repeat("\t", 1) . '*/' . PHP_EOL;
+
+                }
+
+                // Escrita do método que remove o registro
+                $this->data->functions->delete .= str_repeat("\t", $this->tabQuantity) . 'public function delete(' . $this->data->class_parameter . ' $' . $this->data->class_parameter . '): bool|string' . PHP_EOL .
                     str_repeat("\t", $this->tabQuantity) . '{' .
                     PHP_EOL .
                     PHP_EOL .
@@ -200,7 +291,7 @@ class MakeModel extends Command
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preparo o SQL para execução' .
                     PHP_EOL . 
-                    str_repeat("\t", 2) . '$this->stmt = $this->connection->connect()->prepare($this->sql);' .
+                    str_repeat("\t", 2) . '$this->stmt = $this->mysql->connect()->prepare($this->sql);' .
                     PHP_EOL .
                     PHP_EOL .
                     str_repeat("\t", 2) . '// Preencho os parâmetros do SQL' .
@@ -222,6 +313,29 @@ class MakeModel extends Command
                     PHP_EOL .
                     PHP_EOL;
 
+            // Inicialização da função
+            $this->data->functions->class = null;
+
+            // Verifico se devo incluir o comentário
+            if(!empty($this->config->model->dockblock->class->description))
+            {
+
+                // Escrita da documentação da função
+                $this->data->functions->class .= str_repeat("\t", 0) . '/**' . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* ' . $this->config->model->dockblock->class->description . $this->data->table . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '*' . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* @category ' . $this->config->model->dockblock->class->category . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* @package ' . $this->config->model->dockblock->class->package . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* @author ' . $this->config->model->dockblock->class->author . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* @copyright ' . $this->config->model->dockblock->class->copyright . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* @license ' . $this->config->model->dockblock->class->license . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* @version ' . $this->config->model->dockblock->class->version . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '* @link ' . $this->config->model->dockblock->class->link . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '*' . PHP_EOL . 
+                                                 str_repeat("\t", 0) . '*/' . PHP_EOL;
+
+            }
+
             // Template a ser gerado no arquivo
             $template = "<?php" .
                 PHP_EOL .
@@ -229,7 +343,12 @@ class MakeModel extends Command
                 "namespace " . $this->config->dist->namespace . "\model;" .
                 PHP_EOL .
                 PHP_EOL .
-                "class " . $this->data->name_class . " {" .
+                '// Importação de Classe' . PHP_EOL .
+                'use ' . $this->config->dist->namespace . '\controller\\' . $this->data->table . '\\' . $this->data->class_parameter . ';' .
+                PHP_EOL .
+                PHP_EOL .
+                $this->data->functions->class . PHP_EOL .
+                "class " . $this->data->name_class . " extends " . $this->data->class_parameter . " {" .
                 PHP_EOL .
                 PHP_EOL .
                 $this->data->private_variable . 

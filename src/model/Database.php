@@ -36,14 +36,19 @@ class Database
 	 *
 	 * @return array|false
 	 */
-	public function ShowTables() : array|false
+	public function ShowTables(string $database) : array|false
 	{
 
 		// Consulta SQL
-		$this->sql = 'show tables';
+		$this->sql = 'SELECT table_name AS `table`
+					  FROM information_schema.tables
+					  WHERE table_schema = :database;';
 
 		// Preparo o SQL para execução
 		$this->stmt = $this->connection->connect()->prepare($this->sql);
+
+		// Preenchimento de parâmetros
+		$this->stmt->bindParam(':database', $database);
 
 		// Executa o SQL
 		$this->stmt->execute();
