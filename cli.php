@@ -6,6 +6,7 @@ require_once __DIR__ . '/autoload.php';
 // Importação de classes
 use src\controller\cli\CliCommands;
 use src\controller\main\Main;
+use src\model\Database;
 
 try {
 
@@ -17,6 +18,7 @@ try {
 
     // Instânciamento de classes
     $CliCommands = new CliCommands();
+    $config = Main::GetConfig();
 
     // Captura o tempo antes da execução da função
     $inicio = microtime(true);
@@ -41,7 +43,7 @@ try {
         // Informa a exceção
         throw new Exception("Não foram encontrados comandos para ser executado");
     }
-    
+
     // Verifica se foi informado o nome do arquivo
     if (!isset($options['n']) && $options['t'] != '*') {
 
@@ -49,11 +51,22 @@ try {
         $errors .= "\n \t - Não foi informado o nome do " . $commands['make'];
     }
 
-    // Verifica se foi informado o nome do arquivo
+    // Verifica se foi informado a tabela
     if (!isset($options['t'])) {
 
         // Informa a exceção
         $errors .= "\n \t - Não foi informado a tabela do " . $commands['make'];
+
+    }
+
+    $Database = new Database();
+
+    // verifica se a tabela existe no banco de dados
+    if ($Database->CheckTable($config->database->name, $options['n']) > 0) {
+
+        // Informa a exceção
+        $errors .= "\n \t - A tabela informada não existe no banco de dados";
+
     }
 
     // Percorre os comandos recebidos para validar cada um
@@ -63,7 +76,6 @@ try {
 
             // Informa a exceção
             $errors .= "\n \t - Comando não encontrado: " . $key . "." . $value;
-
         }
     }
 
@@ -79,7 +91,7 @@ try {
 
     // Monta o nome completo da classe, incluindo o namespace "commands\".
     $commandClass = "src\\controller\\commands\\" . $CliCommands->GetCommand($commandKey, $commands[$commandKey]);
-    
+
     // Verifica se a classe correspondente ao comando existe.
     if (!class_exists($commandClass)) {
 
@@ -119,7 +131,6 @@ try {
 
     // Exibe da informação
     echo $resultError;
-    
 } finally {
 
     // Captura o tempo após a execução da função

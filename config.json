@@ -1,10 +1,20 @@
 {
   "controller" : {
     "dockblock" : {
-      "get" : true,
-      "set" : true,
-      "class" : true
+      "get" : "Recuperação da informação",
+      "set" : "Validação da informação",
+      "class" : {
+        "description" : "Classe responsável para manipular os dados da tabela de ",
+        "category" : "",
+        "package" : "src\\controller",
+        "author" : "Keven",
+        "copyright" : "2025 Keven",
+        "license" : "MIT",
+        "version" : "1.0.0",
+        "link" : ""
+      }
     },
+    "file_suffix" : "Validate",
     "validation" : true,
     "default_function" : "$",
     "default variables" : [

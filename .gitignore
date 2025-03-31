@@ -1,7 +1,6 @@
-# Ignorar arquivos específicos
+#Arquivos
+config.json
+
+#Diretórios
 .dist/
-
-# Ignorar a pasta especificas arquivos de cache do Windows
-
-# Ignorar arquivos do VSCode
 .vscode/

@@ -37,10 +37,11 @@ class MakeController extends Command
         if ($args['t'] === '*') {
 
             // Obtem todas as tbelas do banco de dados
-            $this->tables = $this->dataBase->ShowTables();
+            $this->tables = $this->dataBase->ShowTables($this->config->database->name);
+
         } else {
             // Armazena apenas a tabela informada
-            $array['Tables_in_poupeira'] = $args['t'];
+            $array['table'] = $args['t'];
 
             // Converte os dados para array
             $this->tables[0] = (object)$array;
@@ -51,9 +52,25 @@ class MakeController extends Command
 
             // Objeto para criação da estrutura
             $this->data = new stdClass();
-            $this->data->name_class = $args['t'] === '*' ? ucfirst($result->Tables_in_poupeira) : $args['n'];
-            $this->data->name_file = $args['t'] === '*' ? Main::toPascalCase($result->Tables_in_poupeira) . '.php' : $args['n'] . '.php';
-            $this->data->table = strtolower($result->Tables_in_poupeira);
+
+            // Define o nome da classe
+            $this->data->name_class = $args['t'] === '*' ? ucfirst($result->table) : $args['n'];
+
+            // Concatena com o sufixo
+            $this->data->name_class .= $this->config->controller->file_suffix;
+
+            // Define o nome do arquivo
+            $this->data->name_file = $args['t'] === '*' ? Main::toPascalCase($result->table) : $args['n'];
+
+            // Concatena com o sufixo
+            $this->data->name_file .= $this->config->controller->file_suffix . '.php';
+
+            // Define a tabela que esta sendo utilizada
+            $this->data->table = strtolower($result->table);
+
+            // Define um apelido para a tabela
+            $this->data->table_nickname = Main::primeirasLetras($this->data->table);
+
             $this->data->private_variables = null;
             $this->data->functions = null;
             $this->data->class = null;
@@ -72,11 +89,11 @@ class MakeController extends Command
                 $var = Main::toCamelCase($result->Field);
 
                 // Verifico se devo inserir o comentário
-                if($this->config->controller->dockblock->set){
+                if(!empty($this->config->controller->dockblock->set)){
                 
                     // Define o comentário para o set
                     $this->data->functions .= str_repeat("\t", 1) . '/** ' . PHP_EOL . 
-                                              str_repeat("\t", 1) . ' * Tratamento da informação "' . $var . '" ' . PHP_EOL .
+                                              str_repeat("\t", 1) . ' * ' . $this->config->controller->dockblock->set . ' "' . $var . '" ' . PHP_EOL .
                                               str_repeat("\t", 1) . ' * ' . PHP_EOL .
                                               str_repeat("\t", 1) . ' * @param ' . Main::getType($result->Type) . ' ' . $var . ' ' . PHP_EOL .
                                               str_repeat("\t", 1) . ' * ' . PHP_EOL .
@@ -96,11 +113,11 @@ class MakeController extends Command
                     PHP_EOL;
 
                 // Verifico se devo inserir o comentário
-                if($this->config->controller->dockblock->get){
+                if(!empty($this->config->controller->dockblock->get)){
                 
                     // Define o comentário para o get
                     $this->data->functions .= str_repeat("\t", 1) . '/** ' . PHP_EOL . 
-                                              str_repeat("\t", 1) . ' * Recuperação da informação "' . $var . '" ' . PHP_EOL .
+                                              str_repeat("\t", 1) . ' * ' . $this->config->controller->dockblock->get . ' "' . $var . '" ' . PHP_EOL .
                                               str_repeat("\t", 1) . ' * ' . PHP_EOL .
                                               str_repeat("\t", 1) . ' * @return ' .  Main::getType($result->Type) . ' ' . PHP_EOL .
                                               str_repeat("\t", 1) . ' */' . PHP_EOL;
@@ -118,21 +135,23 @@ class MakeController extends Command
                     PHP_EOL;
             }
 
-            // Verifico se devo inserir o comentário
-            if($this->config->controller->dockblock->class){
-                
-                // Define o comentário para o get
-                $this->data->class = str_repeat("\t", 0) . '/** ' . PHP_EOL . 
-                                     str_repeat("\t", 0) . ' * Classe responsável para tratar os dados "' . $this->data->name_class . '" ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * @category ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * @package ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * @author ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * @copyright ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * @license ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * @version ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' * @link ' . PHP_EOL .
-                                     str_repeat("\t", 0) . ' */' . PHP_EOL;
+            // Verifico se devo incluir o comentário
+            if(!empty($this->config->model->dockblock->class->description))
+            {
+
+                // Escrita da documentação da função
+                $this->data->class = str_repeat("\t", 0) . '/**' . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* ' . $this->config->model->dockblock->class->description . $this->data->table . PHP_EOL . 
+                                     str_repeat("\t", 0) . '*' . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* @category ' . $this->config->model->dockblock->class->category . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* @package ' . $this->config->model->dockblock->class->package . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* @author ' . $this->config->model->dockblock->class->author . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* @copyright ' . $this->config->model->dockblock->class->copyright . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* @license ' . $this->config->model->dockblock->class->license . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* @version ' . $this->config->model->dockblock->class->version . PHP_EOL . 
+                                     str_repeat("\t", 0) . '* @link ' . $this->config->model->dockblock->class->link . PHP_EOL . 
+                                     str_repeat("\t", 0) . '*' . PHP_EOL . 
+                                     str_repeat("\t", 0) . '*/' . PHP_EOL;
 
             }
 

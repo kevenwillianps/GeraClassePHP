@@ -1,0 +1,69 @@
+{
+  "controller" : {
+    "dockblock" : {
+      "get" : "Recuperação da informação",
+      "set" : "Validação da informação",
+      "class" : {
+        "description" : "Classe responsável para manipular os dados da tabela de ",
+        "category" : "",
+        "package" : "src\\controller",
+        "author" : "Keven",
+        "copyright" : "2025 Keven",
+        "license" : "MIT",
+        "version" : "1.0.0",
+        "link" : ""
+      }
+    },
+    "file_suffix" : "Validate",
+    "validation" : true,
+    "default_function" : "$",
+    "default variables" : [
+      {
+        "type" : "Main",
+        "visibility" : "private",
+        "name" : "Main"
+      }
+    ]
+  },
+  "model" : {
+    "dockblock" : {
+      "class" : {
+        "description" : "Classe responsável para manipular os dados da tabela de ",
+        "category" : "",
+        "package" : "src\\model",
+        "author" : "Keven",
+        "copyright" : "2025 Keven",
+        "license" : "MIT",
+        "version" : "1.0.0",
+        "link" : ""
+      },
+      "save" : "Persitência de dados. Caso o ID seja zero sera criado um novo, caso não, o registro será atualizado",
+      "delete" : "Remove um registro em específico",
+      "get" : "Busca um registro especifico pelo ID informado",
+      "all" : "Lista todos os registros existentes"
+    },
+    "validation" : true,
+    "default_function" : "$",
+    "class_parameter_suffix" : "Validate",
+    "default variables" : [
+      {
+        "type" : "Main",
+        "visibility" : "private",
+        "name" : "Main"
+      }
+    ]
+  },
+  "dist": {
+    "path": "dist",
+    "namespace" : "src"
+  },
+  "database": {
+    "host": "127.0.0.1",
+    "name": "cdldf",
+    "port": "3306",
+    "user": "root",
+    "password": "root",
+    "charset": "utf8",
+    "encrypt": true
+  }
+}

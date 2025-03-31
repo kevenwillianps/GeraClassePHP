@@ -344,7 +344,7 @@ class MakeModel extends Command
                 PHP_EOL .
                 PHP_EOL .
                 '// Importação de Classe' . PHP_EOL .
-                'use ' . $this->config->dist->namespace . '\controller\\' . $this->data->table . '\\' . $this->data->class_parameter . ';' .
+                'use ' . $this->config->dist->namespace . '\controller\\' . $this->data->class_parameter . ';' .
                 PHP_EOL .
                 PHP_EOL .
                 $this->data->functions->class . PHP_EOL .

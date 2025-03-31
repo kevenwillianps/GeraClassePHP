@@ -112,6 +112,35 @@ class Database
 	}
 
 	/**
+	 * Conta quantas tabelas existe com aquele nome
+	 *
+	 * @return string
+	 */
+	public function CheckTable(string $database, string $table) : array|false
+	{
+
+		// Consulta SQL
+		$this->sql = 'SELECT COUNT(*) 
+					  FROM information_schema.tables 
+					  WHERE table_schema = :database 
+					 AND table_name = :table;';
+
+		// Preparo o SQL para execução
+		$this->stmt = $this->connection->connect()->prepare($this->sql);
+
+		// Preenchimento de parâmetros
+		$this->stmt->bindParam(':database', $database);
+		$this->stmt->bindParam(':table', $table);
+
+		// Executa o SQL
+		$this->stmt->execute();
+
+		// Retorno do resultado
+		return $this->stmt->fetchAll(\PDO::FETCH_OBJ);
+
+	}
+
+	/**
 	 * Encerra conexões abertas
 	 */
 	function __destruct()
