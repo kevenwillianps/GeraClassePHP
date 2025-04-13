@@ -62,12 +62,12 @@ try {
     $Database = new Database();
 
     // verifica se a tabela existe no banco de dados
-    if ($Database->CheckTable($config->database->name, $options['n']) > 0) {
+    // if ($Database->CheckTable($config->database->name, $options['n']) > 0) {
 
-        // Informa a exceção
-        $errors .= "\n \t - A tabela informada não existe no banco de dados";
+    //     // Informa a exceção
+    //     $errors .= "\n \t - A tabela informada não existe no banco de dados";
 
-    }
+    // }
 
     // Percorre os comandos recebidos para validar cada um
     foreach ($commands as $key => $value) {

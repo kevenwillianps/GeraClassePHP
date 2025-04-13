@@ -67,7 +67,7 @@ class Database
 	{
 
 		// Consulta SQL
-		$this->sql = 'describe ' . $table;
+		$this->sql = 'describe `' . $table . '`';
 
 		// Preparo o SQL para execução
 		$this->stmt = $this->connection->connect()->prepare($this->sql);
@@ -123,7 +123,7 @@ class Database
 		$this->sql = 'SELECT COUNT(*) 
 					  FROM information_schema.tables 
 					  WHERE table_schema = :database 
-					 AND table_name = :table;';
+					 AND table_name = `:table`;';
 
 		// Preparo o SQL para execução
 		$this->stmt = $this->connection->connect()->prepare($this->sql);
