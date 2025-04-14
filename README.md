@@ -1,7 +1,3 @@
-Aqui está o README atualizado com as novas funcionalidades:  
-
----
-
 # Gerador de Classes PHP a partir do Banco de Dados  
 
 Bem-vindo ao **Gerador de Classes PHP**! 🚀  
