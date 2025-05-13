@@ -110,7 +110,3 @@ Fique à vontade para contribuir com o projeto e sugerir melhorias! 😊
 Este projeto é licenciado sob a licença MIT. Consulte o arquivo `LICENSE` para mais detalhes.  
 
 📌 **Mantenedor:** [Keven Willian](http://github.com/kevenwillianps/)  
-
----
-
-Esse README reflete todas as novas funcionalidades de forma clara e organizada. 🚀
